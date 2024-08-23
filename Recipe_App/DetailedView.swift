@@ -118,15 +118,28 @@ struct DetailedView: View {
             
             //get instructions
             let instructions = json["meals"]?[0]["strInstructions"] as! String
-            //get ingredients without empty spaces and sorted by order
-            let ingredientNames = json["meals"]?[0].filter({ $0.key.hasPrefix("strIngredient") && !($0.value as! String).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).sorted(by: { $0.key < $1.key }) ?? []
-            //get measurements without empty spaces sorted by order
-            let measurements = json["meals"]?[0].filter({ $0.key.hasPrefix("strMeasure") && !($0.value as! String).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }).sorted(by: { $0.key < $1.key }) ?? []
             
-            var ingredients: [IngredientModel] = []
+            //get ingredients without empty spaces and sorted by order
+            var ingredientNames: [String] = []
+            let sortedData = json["meals"]?[0].sorted(by: {$0.key < $1.key}) ?? []
+            sortedData.forEach { key, value in
+                if key.hasPrefix("strIngredient"), let stringValue = value as? String, !stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    ingredientNames.append(stringValue)
+                }
+            }
+            
+           //get measurements without empty spaces sorted by order
+            var measurements: [String] = []
+            sortedData.forEach { key, value in
+                if key.hasPrefix("strMeasure"), let stringValue = value as? String, !stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    measurements.append(stringValue)
+                }
+            }
+            
             //merge ingredients and measurements into dict assuming they always have equal pair
+            var ingredients: [IngredientModel] = []
             for i in stride(from: 0, to: ingredientNames.count, by: 1) { //make sure to use ingredientNames.count
-                ingredients.append(IngredientModel(name: ingredientNames[i].value as! String, measurement: measurements[i].value as! String))
+                ingredients.append(IngredientModel(name: ingredientNames[i], measurement: measurements[i]))
             }
 
             recipe = RecipeModel(recipeThumbnail: recipeThumbnail, ingredients: ingredients, instructions: instructions)
